@@ -1,5 +1,5 @@
 import { REACT_TEXT } from "./constant";
-
+import { addEvent } from './event'
 /**
  * 把虚拟DOM变成真实DOM插入到容器内部
  * @param vdom
@@ -19,7 +19,7 @@ const mount = (vdom, parentDOM) => {
  * 把虚拟DOM转换成真实DOM
  * @param vdom
  */
-const createDOM = (vdom) => {
+export const createDOM = (vdom) => {
   if (!vdom) return null
   const { type, props } = vdom
   let dom // 真实DOM
@@ -47,13 +47,14 @@ const createDOM = (vdom) => {
       }
     }
   }
+  vdom.dom = dom // 让虚拟DOM的dom属性只想这个真实dom
   return dom
 }
 const mountClassComponent = (vdom) => {
   const { type: ClassComponent, props} = vdom
   const classInstance = new ClassComponent(props)
   const renderVdom = classInstance.render()
-  vdom.oldRenderVdom = renderVdom
+  classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom
   return createDOM(renderVdom)
 }
 
@@ -69,7 +70,7 @@ const reconcileChildren = (childrenVdom, parentDOM) => {
   childrenVdom.forEach(childVdom => mount(childVdom, parentDOM))
 }
 /**
- * 把心属性更新到真实DOM上
+ * 把新属性更新到真实DOM上
  * @param dom
  * @param oldProps
  * @param newProps
@@ -83,10 +84,39 @@ const updateProps = (dom, oldProps, newProps) => {
       for (let attr in styleObj) {
         dom.style[attr] = styleObj[attr]
       }
+    } else if (key.startsWith('on')) {
+      // dom[key.toLocaleLowerCase()] = newProps[key]
+      addEvent(dom, key.toLocaleLowerCase(), newProps[key])
     } else {
       dom[key] = newProps[key]
     }
   }
+}
+
+export function findDOM (vdom) {
+  if (!vdom) return null
+  if (vdom.dom) {
+    return vdom.dom
+  } else {
+    // 类组件和函数组件，它们虚拟DOM身上没有dom属性，但是oldRenderVdom
+    return findDOM(vdom.oldRenderVdom)
+  }
+
+}
+
+/**
+ * dom-diff 核心是比较新旧虚拟DOM的差异，然后把差异同步到真实DOM节点上
+ * @param parentDOM
+ * @param oldVdom
+ * @param newVdom
+ */
+export function compareTowVdom (parentDOM, oldVdom, newVdom) {
+  let oldDOM = findDOM(oldVdom) // 获取oldRenderVdom 对应的真实DOM
+  // 然后基于新的属性和状态，计算新的虚拟DOM
+   // 根据新的虚拟DOM得到新的真实DOM
+  let newDOM = createDOM(newVdom)
+  // 把老的真实DOM替换成新的虚拟DOM
+  parentDOM.replaceChild(newDOM, oldDOM) // 全部替换，性能很差
 }
 
 const ReactDOM = {

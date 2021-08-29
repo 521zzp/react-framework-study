@@ -1,4 +1,5 @@
 import { wrapToVdom } from "./utils";
+import Component from "./Component";
 
 /**
  *
@@ -8,7 +9,7 @@ import { wrapToVdom } from "./utils";
  * @param children 子元素，可能一个（对象），也可能多个（数组）
  */
 function createElement (type, config, children) {
-  console.log('createElement:', type)
+  // console.log('createElement:', type)
   let ref // 通过ref引用此元素的DOM
   let key // 可以唯一标识一个子元素
   if (config) {
@@ -28,12 +29,7 @@ function createElement (type, config, children) {
   return { type, ref, key, props }
 }
 
-class Component {
-  static isClassComponent = true // 当子类继承父类的时候，父类的静态属性也是可以继承的
-  constructor (props) {
-    this.props = props
-  }
-}
+
 
 const React = {
   createElement,

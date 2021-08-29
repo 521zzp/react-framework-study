@@ -1,7 +1,7 @@
-// import React from 'react';
-// import ReactDOM from 'react-dom';
 import React from './react';
 import ReactDOM from './react-dom';
+// import React from 'react';
+// import ReactDOM from 'react-dom';
 import './index.css';
 // import App from './App';
 // import reportWebVitals from './reportWebVitals';
@@ -22,7 +22,6 @@ import './index.css';
  * @constructor
  */
 function FunctionComponent (props) {
-  // return <FunctionComponent2 title={`FunctionComponent${props.title}`} ></FunctionComponent2>
   return <FunctionComponent2 title={props.title + ' lord'} />
   // return <div style={{ color: 'pink' }}>{ props.title }</div>
 }
@@ -48,6 +47,54 @@ class ClassComponent extends React.Component {
   }
 }
 
+
+class Counter extends React.Component {
+  constructor(props) {
+    super(props);
+    // 只有在构造函数中，次啊能直接给this.state赋值
+    this.state = { number: 0, age: 10 }
+  }
+
+
+
+
+  handleClick = (event) => {
+    // updateQueue.isBatchingUpdate = true
+    // 可以通过 setState 修改状态，每次修改后，组件会重新更新
+    // setState参数是新的状态对象，这个新状态对象会合并到老状态对象上
+    // 老状态没有的属性会添加，老状态有的属性会覆盖
+    // state状态的更新是批量的，是异步执行的
+    // 先实现同步更新，后面在实现异步更新
+    this.setState({ number: this.state.number + 1 })
+    console.log(this.state.number)
+    this.setState({ number: this.state.number + 1 })
+    console.log(this.state.number)
+    setTimeout(() => { // 在定时器里面是同步的
+      this.setState({ number: this.state.number + 1 })
+      console.log(this.state.number)
+      this.setState({ number: this.state.number + 1 })
+      console.log(this.state.number)
+    })
+    // 如果直接修改state的话，this.state的确改变了，但是组件并没有刷新，视图不更新
+  }
+  // this.state = { number }
+
+  handleDivClick = () => {
+    console.log('div click')
+  }
+
+  render () {
+    return <div onClick={ this.handleDivClick }>
+      <p>{ this.props.title }</p>
+      <p>number: { this.state.number }</p>
+      <p>age: { this.state.age }</p>
+      <button onClick={ this.handleClick }>add</button>
+    </div>
+  }
+}
+
+
+
 // const element = <FunctionComponent title="标题哈哈"/>
 const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
 
@@ -57,7 +104,7 @@ const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
 console.log(JSON.stringify(element, null, 2))
 
 ReactDOM.render(
-  element,
+  <Counter title="老标题"/>,
   document.getElementById('root')
 );
 
