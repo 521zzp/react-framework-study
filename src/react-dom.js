@@ -25,8 +25,13 @@ const createDOM = (vdom) => {
   let dom // 真实DOM
   if (type === REACT_TEXT) { // 如果这个元素是文本的话
     dom = document.createTextNode(props.content)
-  } else if (typeof type === 'function') {
-    return mountFunctionComponent(vdom)
+  } else if (typeof type === 'function') { //如果这个元素类型是函数的话
+    if (type.isClassComponent) { //说明是个类组件
+      return mountClassComponent(vdom)
+    } else {
+      return mountFunctionComponent(vdom)
+    }
+
   } else {
     dom = document.createElement(type)
   }
@@ -44,6 +49,14 @@ const createDOM = (vdom) => {
   }
   return dom
 }
+const mountClassComponent = (vdom) => {
+  const { type: ClassComponent, props} = vdom
+  const classInstance = new ClassComponent(props)
+  const renderVdom = classInstance.render()
+  vdom.oldRenderVdom = renderVdom
+  return createDOM(renderVdom)
+}
+
 const mountFunctionComponent = (vdom) => {
   let { type, props} = vdom
   let renderVdom = type(props)

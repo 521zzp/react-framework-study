@@ -22,13 +22,6 @@ import './index.css';
  * @constructor
  */
 function FunctionComponent (props) {
-  // const el2 = React.createElement('h1', {
-  //   className: 'title',
-  //   style: {
-  //     color: '#db4646'
-  //   }
-  // }, 'hello', React.createElement('span', null, 'world'))
-
   // return <FunctionComponent2 title={`FunctionComponent${props.title}`} ></FunctionComponent2>
   return <FunctionComponent2 title={props.title + ' lord'} />
   // return <div style={{ color: 'pink' }}>{ props.title }</div>
@@ -38,8 +31,27 @@ const FunctionComponent2 = (props) => {
   return <div style={{ color: 'pink' }}>{ props.title }</div>
 }
 
+/**
+ * 也可以通过类定义组件
+ * 类组件的渲染是 先通过属性对象创建类组件实力，调用实例的render方法返回一个React元素
+ */
+class ClassComponent extends React.Component {
+
+  render () {
+    return <div>
+      <div style={{ color: '#6de379' }}>外层 class 组件</div>
+      <div style={{ color: '#6aace7' }}>
+        <div>内层函数组件</div>
+        <FunctionComponent title={ this.props.title }/>
+      </div>
+    </div>
+  }
+}
+
 // const element = <FunctionComponent title="标题哈哈"/>
-const element = React.createElement(FunctionComponent, { title: '哈哈哈哈' })
+const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
+
+
 
 
 console.log(JSON.stringify(element, null, 2))
