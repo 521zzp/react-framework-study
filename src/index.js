@@ -7,8 +7,6 @@ import { Form } from "./Refs";
 // import App from './App';
 // import reportWebVitals from './reportWebVitals';
 
-// const el = <div>content</div>
-
 
 /**
  * 可以通过 函数定义组件
@@ -47,7 +45,6 @@ class ClassComponent extends React.Component {
     </div>
   }
 }
-
 
 class Counter extends React.Component {
   constructor(props) {
@@ -90,6 +87,56 @@ class Counter extends React.Component {
   }
 }
 
+class Counter2 extends React.Component {
+  // 1、设置默认属性和初始状态
+  static defaultProps = {
+    name: 'React架构'
+  }
+  constructor(props) {
+    super(props);
+    this.state = { number: 0 } // 设置默认状态
+    console.log('Counter 1.constructor')
+  }
+
+  componentWillMount () {
+    console.log('Counter 2.componentWillMount')
+  }
+
+  handleClick = (event) => {
+    this.setState({ number: this.state.number + 1 })
+  }
+
+  shouldComponentUpdate (nextProps, nextState) {
+    console.log('Counter 5.shouldComponentUpdate')
+    // 偶数刷新
+    return nextState.number % 2 === 0
+  }
+
+  componentWillUpdate () {
+    console.log('Counter 6.componentWillUpdate')
+  }
+
+  render () {
+    console.log('Counter 3.render')
+    return <div>
+      <p>{ this.state.number }</p>
+      <button onClick={ this.handleClick }>+</button>
+    </div>
+  }
+
+  componentDidUpdate () {
+    console.log('Counter 7.componentDidUpdate')
+  }
+
+  componentDidMount () {
+    console.log('Counter 4.componentDidMount')
+  }
+
+
+
+
+}
+
 class Calculate extends React.Component {
   constructor(props) {
     super(props);
@@ -102,7 +149,6 @@ class Calculate extends React.Component {
     let b = this.bRef.current.value
     this.resultRef.current.value = a + b
   }
-
   render () {
     // 如果给一个原生组件添加了一个ref属性，那么当次原生虚拟DOM组件变成真实DOM之后
     // 会把真实的DOM元素赋值 this.ref.current
@@ -115,16 +161,14 @@ class Calculate extends React.Component {
   }
 }
 
+
 // const element = <FunctionComponent title="标题哈哈"/>
 const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
-
-
-
 
 console.log(JSON.stringify(element, null, 2))
 
 ReactDOM.render(
-  <Form title="老标题"/>,
+  <Counter2 title="老标题"/>,
   document.getElementById('root')
 );
 

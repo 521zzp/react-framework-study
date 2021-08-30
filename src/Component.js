@@ -21,7 +21,9 @@ class Updater {
     this.pendingState.push(partialState)
     this.emitUpdate() // 触发更新
   }
-  emitUpdate () {
+  // 发射更新，状态和属性变化都可能会执行这个方法
+  emitUpdate (nextProps) {
+    this.nextProps = nextProps
     // 有可能是批量异步更新，也有可能是同步更新
     if (updateQueue.isBatchingUpdate) { // 批量异步更新
       updateQueue.updaters.push(this) // 不刷新组件视图了，只是把自己这个updater实例添加到updateQueue里面等待生效
@@ -31,9 +33,10 @@ class Updater {
 
   }
   updateComponent () {
-    const { classInstance, pendingState } = this
-    if (pendingState.length > 0) {
-      shouldUpdate(classInstance, this.getState())
+    const { classInstance, nextProps, pendingState } = this
+    // 如果属性或者状态变了，都会进入更新逻辑
+    if (nextProps || pendingState.length > 0) {
+      shouldUpdate(classInstance, nextProps,  this.getState())
     }
   }
   // 获取最新状态
@@ -52,9 +55,35 @@ class Updater {
   }
 }
 
-function shouldUpdate (classInstance, nextSatae) {
-  classInstance.state = nextSatae // 先把新状态复制给实例的State
-  classInstance.forceUpdate()
+/**
+ *
+ * @param classInstance 类的实例
+ * @param nextProps 新的属性对象
+ * @param nextState 新的状态对象
+ */
+function shouldUpdate (classInstance, nextProps, nextState) {
+  let willUpdate = true // 表示组件是否需要更新
+  const shouldComponentUpdate = classInstance.shouldComponentUpdate
+  // 有次方法并且返回false，组件不更新 生命周期 shouldComponentUpdate
+  if (shouldComponentUpdate && !shouldComponentUpdate(nextProps, nextState)) {
+    willUpdate = false // 表示不需要更新
+  }
+  // 如果需要更新，并且有componentWillUpdate方法，就执行它
+  if(willUpdate && classInstance.componentWillUpdate) {
+    // 生命周期 componentWillUpdate
+    classInstance.componentWillUpdate()
+  }
+  // 不管要不要更新组件，状态都要更新
+  if (nextProps) {
+    classInstance.props = nextProps
+  }
+  classInstance.state = nextState
+  if (willUpdate) {
+    classInstance.forceUpdate()
+  }
+
+  // classInstance.state = nextState // 先把新状态复制给实例的State
+  // classInstance.forceUpdate()
 }
 
 
@@ -75,9 +104,11 @@ class Component {
     let oldDOM = findDOM(oldRenderVdom) // 获取oldRenderVdom 对应的真实DOM
     let newRenderVdom = this.render()
     compareTowVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom)
-
-
     this.oldRenderVdom = newRenderVdom
+    if (this.componentDidUpdate) {
+      // 生命周期 componentDidUpdate
+      this.componentDidUpdate(this.props, this.state)
+    }
   }
 }
 

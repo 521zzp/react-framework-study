@@ -8,12 +8,15 @@ import {forwardRef} from "react";
  */
 const render = (vdom, container) => {
   mount(vdom, container)
+  // react hooks 调度更新过程 需要卸载此处
 }
 
 const mount = (vdom, parentDOM) => {
   let newDOM = createDOM(vdom)
   if (newDOM) {
     parentDOM.appendChild(newDOM)
+    // 生命周期 componentDidMount
+    if (newDOM._componentDidMount) newDOM._componentDidMount();
   }
 }
 /**
@@ -31,9 +34,9 @@ export const createDOM = (vdom) => {
     dom = document.createTextNode(props.content)
   } else if (typeof type === 'function') { //如果这个元素类型是函数的话
     if (type.isClassComponent) { //说明是个类组件
-      return mountClassComponent(vdom)
+      return mountClassComponent(vdom) // 挂载类组件
     } else {
-      return mountFunctionComponent(vdom)
+      return mountFunctionComponent(vdom) // 挂载函数组件
     }
 
   } else {
@@ -70,9 +73,17 @@ const mountClassComponent = (vdom) => {
   const classInstance = new ClassComponent(props)
   // 如果类组件的虚拟DOM有ref属性，就把类的实例赋给ref.current属性
   if (ref) ref.current = classInstance
+  if (classInstance.componentWillMount) {
+    classInstance.componentWillMount()
+  }
   const renderVdom = classInstance.render()
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom
-  return createDOM(renderVdom)
+  // 把类组件实例的render方法返回的虚拟DOM转成真实DOM
+  let dom = createDOM(renderVdom)
+  if (classInstance.componentDidMount) { // 组件已挂载
+    dom._componentDidMount = classInstance.componentDidMount.bind(classInstance)
+  }
+  return dom
 }
 
 const mountFunctionComponent = (vdom) => {
