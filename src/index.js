@@ -3,6 +3,7 @@ import ReactDOM from './react-dom';
 // import React from 'react';
 // import ReactDOM from 'react-dom';
 import './index.css';
+import { Form } from "./Refs";
 // import App from './App';
 // import reportWebVitals from './reportWebVitals';
 
@@ -54,10 +55,6 @@ class Counter extends React.Component {
     // 只有在构造函数中，次啊能直接给this.state赋值
     this.state = { number: 0, age: 10 }
   }
-
-
-
-
   handleClick = (event) => {
     // updateQueue.isBatchingUpdate = true
     // 可以通过 setState 修改状态，每次修改后，组件会重新更新
@@ -93,7 +90,30 @@ class Counter extends React.Component {
   }
 }
 
+class Calculate extends React.Component {
+  constructor(props) {
+    super(props);
+    this.aRef = React.createRef() // { current: null }
+    this.bRef = React.createRef() // { current: null }
+    this.resultRef = React.createRef()  // { current: null }
+  }
+  handleClick = () => {
+    let a = this.aRef.current.value
+    let b = this.bRef.current.value
+    this.resultRef.current.value = a + b
+  }
 
+  render () {
+    // 如果给一个原生组件添加了一个ref属性，那么当次原生虚拟DOM组件变成真实DOM之后
+    // 会把真实的DOM元素赋值 this.ref.current
+    return <div>
+      <input type="text" ref={ this.aRef }/>+
+      <input type="text" ref={ this.bRef }/>=
+      <input type="text" ref={ this.resultRef }/>
+      <button onClick={ this.handleClick }>add</button>
+    </div>
+  }
+}
 
 // const element = <FunctionComponent title="标题哈哈"/>
 const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
@@ -104,7 +124,7 @@ const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
 console.log(JSON.stringify(element, null, 2))
 
 ReactDOM.render(
-  <Counter title="老标题"/>,
+  <Form title="老标题"/>,
   document.getElementById('root')
 );
 

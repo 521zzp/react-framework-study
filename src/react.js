@@ -1,5 +1,6 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
+import {REACT_ELEMENT, REACT_FORWARD_REF} from "./constant";
 
 /**
  *
@@ -15,24 +16,34 @@ function createElement (type, config, children) {
   if (config) {
     config._source && delete config._source
     config._self && delete config._self
-    ({ref, key} = config)
+    ref = config.ref
+    key = config.key
     delete config.ref
     delete config.key
   }
-  let props = { ...config }
+  let props = { ...config } // props里面没有ref属性
 
   if (arguments.length > 3) {
     props.children = Array.prototype.slice.call(arguments, 2).map(wrapToVdom)
   } else {
     props.children = wrapToVdom(children) // children 可能是React元素，也可能是一个字符串、数字、null、undefined
   }
-  return { type, ref, key, props }
+  return { $$typeof: REACT_ELEMENT, type, ref, key, props } // React元素
 }
 
-
-
+function createRef () {
+  return { current: null }
+}
+function forwardRef (render) {
+  return {
+    $$typeof: REACT_FORWARD_REF,
+    render // 函数组件 <InputText />
+  }
+}
 const React = {
   createElement,
+  createRef,
+  forwardRef,
   Component
 }
 

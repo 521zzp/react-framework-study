@@ -1,5 +1,6 @@
-import { REACT_TEXT } from "./constant";
+import { REACT_TEXT, REACT_FORWARD_REF } from "./constant";
 import { addEvent } from './event'
+import {forwardRef} from "react";
 /**
  * 把虚拟DOM变成真实DOM插入到容器内部
  * @param vdom
@@ -21,8 +22,11 @@ const mount = (vdom, parentDOM) => {
  */
 export const createDOM = (vdom) => {
   if (!vdom) return null
-  const { type, props } = vdom
+  const { type, props, ref } = vdom
   let dom // 真实DOM
+  if (type && type.$$typeof === REACT_FORWARD_REF) { // 说明它是一个转发过得函数组件
+    return mountForwardComponent(vdom)
+  }
   if (type === REACT_TEXT) { // 如果这个元素是文本的话
     dom = document.createTextNode(props.content)
   } else if (typeof type === 'function') { //如果这个元素类型是函数的话
@@ -48,11 +52,24 @@ export const createDOM = (vdom) => {
     }
   }
   vdom.dom = dom // 让虚拟DOM的dom属性只想这个真实dom
+  if (ref) {
+    ref.current = dom // 如果把虚拟DOM转成真实DOM了，就把真实DOM给 ref.current
+  }
   return dom
 }
+
+const mountForwardComponent = (vdom) => {
+  let { type, props, ref } = vdom
+  const renderVdom = type.render(props, ref)
+  vdom.oldRenderVdom = renderVdom
+  return createDOM(renderVdom)
+}
+
 const mountClassComponent = (vdom) => {
-  const { type: ClassComponent, props} = vdom
+  const { type: ClassComponent, props, ref } = vdom
   const classInstance = new ClassComponent(props)
+  // 如果类组件的虚拟DOM有ref属性，就把类的实例赋给ref.current属性
+  if (ref) ref.current = classInstance
   const renderVdom = classInstance.render()
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom
   return createDOM(renderVdom)
