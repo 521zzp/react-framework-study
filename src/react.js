@@ -1,6 +1,6 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
-import {REACT_ELEMENT, REACT_FORWARD_REF} from "./constant";
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_FRAGMENT } from "./constant";
 
 /**
  *
@@ -19,7 +19,7 @@ function createElement (type, config, children) {
     ref = config.ref
     key = config.key
     delete config.ref
-    delete config.key
+    delete config.key // props里面没有key, 和props同层级关系
   }
   let props = { ...config } // props里面没有ref属性
 
@@ -44,6 +44,7 @@ const React = {
   createElement,
   createRef,
   forwardRef,
+  Fragment: REACT_FRAGMENT,
   Component
 }
 

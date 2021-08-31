@@ -7,6 +7,8 @@ import { Form } from "./Refs";
 // import App from './App';
 // import reportWebVitals from './reportWebVitals';
 
+import CounterDiff from './components/CounterDiff'
+
 
 /**
  * 可以通过 函数定义组件
@@ -118,8 +120,9 @@ class Counter2 extends React.Component {
 
   render () {
     console.log('Counter 3.render')
-    return <div>
+    return <div id={`div-${ this.state.number }`}>
       <p>{ this.state.number }</p>
+      { this.state.number === 4 ? null : <Counter2Child count={ this.state.number } /> }
       <button onClick={ this.handleClick }>+</button>
     </div>
   }
@@ -132,9 +135,41 @@ class Counter2 extends React.Component {
     console.log('Counter 4.componentDidMount')
   }
 
+}
+class Counter2Child extends React.Component {
 
+  constructor(props) {
+    super(props);
+    console.log('Counter2Child 1.constructor')
+  }
 
+  componentWillMount () {
+    console.log('Counter2Child 2.componentWillMount')
+  }
 
+  componentWillReceiveProps (nextProps) {
+    console.log('Counter2Child 5.componentWillReceiveProps:', nextProps)
+  }
+
+  componentDidMount () {
+    console.log('Counter2Child 4.componentDidMount')
+  }
+
+  componentWillUnmount () {
+    console.log('Counter2Child 7.componentWillUnmount')
+  }
+
+  shouldComponentUpdate (nextProps, nextState) {
+    console.log('Counter2Child 6.shouldComponentUpdate')
+    // 偶数刷新
+    return nextProps.count % 3 === 0
+  }
+  render () {
+    console.log('Counter2Child 3.render')
+    return <div> Counter2Child
+      { this.props.count }
+    </div>
+  }
 }
 
 class Calculate extends React.Component {
@@ -168,7 +203,7 @@ const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
 console.log(JSON.stringify(element, null, 2))
 
 ReactDOM.render(
-  <Counter2 title="老标题"/>,
+  <CounterDiff title="老标题"/>,
   document.getElementById('root')
 );
 

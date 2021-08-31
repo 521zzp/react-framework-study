@@ -45,3 +45,12 @@ function preventDefault (event) {
     event.preventDefault()
   }
 }
+
+/**
+ * 对于类组件来书
+ * renderVdom
+ * 类的实例.render()返回的虚拟DOM oldRenderVom
+ *
+ * 对应函数组件来说
+ * 函数执行（）返回的虚拟DOM oldRenderVom
+ */
