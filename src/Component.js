@@ -102,12 +102,24 @@ class Component {
     console.log('Component forceUpdate')
     let oldRenderVdom = this.oldRenderVdom // 上一次类逐渐render方法计算得到的虚拟DOM
     let oldDOM = findDOM(oldRenderVdom) // 获取oldRenderVdom 对应的真实DOM
+    if (this.constructor.contextType) {
+      this.context = this.constructor.contextType._currentValue
+    }
+    // 新的生命周期 getDerivedStateFromProps
+    if (this.constructor.getDerivedStateFromProps) {
+      const newState = this.constructor.getDerivedStateFromProps(this.props, this.state)
+      if (newState) {
+        this.state = newState
+      }
+    }
+    const snapshot = this.getSnapshotBeforeUpdate && this.getSnapshotBeforeUpdate()
+    // 然后基于新的属性和状态，计算新的虚拟DOM
     let newRenderVdom = this.render()
     compareTowVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom)
     this.oldRenderVdom = newRenderVdom
     if (this.componentDidUpdate) {
       // 生命周期 componentDidUpdate
-      this.componentDidUpdate(this.props, this.state)
+      this.componentDidUpdate(this.props, this.state, snapshot)
     }
   }
 }

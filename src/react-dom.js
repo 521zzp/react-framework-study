@@ -1,4 +1,13 @@
-import { REACT_TEXT, REACT_FORWARD_REF, REACT_FRAGMENT, MOVE, PLACEMENT, DELETION } from "./constant";
+import {
+  REACT_TEXT,
+  REACT_FORWARD_REF,
+  REACT_FRAGMENT,
+  MOVE,
+  PLACEMENT,
+  DELETION,
+  REACT_PROVIDER,
+  REACT_CONTEXT
+} from "./constant";
 import { addEvent } from './event'
 import {forwardRef} from "react";
 /**
@@ -27,7 +36,11 @@ export const createDOM = (vdom) => {
   if (!vdom) return null
   const { type, props, ref } = vdom
   let dom // 真实DOM
-  if (type && type.$$typeof === REACT_FORWARD_REF) { // 说明它是一个转发过得函数组件
+  if (type && type.$$typeof === REACT_PROVIDER) {
+    return mountProvider(vdom)
+  } else if (type && type.$$typeof === REACT_CONTEXT) {
+    return mountContext(vdom)
+  } else if (type && type.$$typeof === REACT_FORWARD_REF) { // 说明它是一个转发过得函数组件
     return mountForwardComponent(vdom)
   } else if (type === REACT_FRAGMENT) {
     dom = document.createDocumentFragment()
@@ -39,7 +52,6 @@ export const createDOM = (vdom) => {
     } else {
       return mountFunctionComponent(vdom) // 挂载函数组件
     }
-
   } else {
     dom = document.createElement(type)
   }
@@ -63,6 +75,31 @@ export const createDOM = (vdom) => {
   return dom
 }
 
+/**
+ * 渲染 Provider 组件
+ * 1、真正要渲染的是它的儿子 children
+ * 2、把 Provider 组件自己收到的value属性赋值给 context._currentValue
+ * @param vdom
+ * @returns {*|Text|DocumentFragment}
+ */
+const mountProvider = (vdom) => {
+  const { type, props, ref } = vdom
+  const context = type._context
+  context._currentValue = props.value
+  const renderVdom = props.children
+  vdom.oldRenderVdom = renderVdom // 这次操作是让当前的虚拟DOM的 oldRenderVdom 只想要渲染的虚拟 DOM
+  return createDOM(renderVdom)
+}
+
+const mountContext = (vdom) => {
+  const { type, props, ref } = vdom
+  const context = type._context
+  const currentValue = context._currentValue
+  const renderVdom = props.children(currentValue)
+  vdom.oldRenderVdom = renderVdom // 这次操作是让当前的虚拟DOM的 oldRenderVdom 只想要渲染的虚拟 DOM
+  return createDOM(renderVdom)
+}
+
 const mountForwardComponent = (vdom) => {
   let { type, props, ref } = vdom
   const renderVdom = type.render(props, ref)
@@ -73,6 +110,9 @@ const mountForwardComponent = (vdom) => {
 const mountClassComponent = (vdom) => {
   const { type: ClassComponent, props, ref } = vdom
   const classInstance = new ClassComponent(props)
+  if (ClassComponent.contextType) {
+    classInstance.context = ClassComponent.contextType._currentValue
+  }
   // 如果类组件的虚拟DOM有ref属性，就把类的实例赋给ref.current属性
   if (ref) ref.current = classInstance
   if (classInstance.componentWillMount) { // 生命周期 componentWillMount
@@ -187,7 +227,12 @@ export function compareTowVdom (parentDOM, oldVdom, newVdom, nextDOM) {
  * @param newVdom
  */
 function updateElement (oldVdom, newVdom) {
-  if(oldVdom.type === REACT_TEXT) {
+  // Provider 更新
+  if (oldVdom.type.$$typeof === REACT_PROVIDER) {
+    updateProvider(oldVdom, newVdom)
+  } else if (oldVdom.type.$$typeof === REACT_CONTEXT) { //
+    updateContext(oldVdom, newVdom)
+  } else if(oldVdom.type === REACT_TEXT) { // 文本节点
     if (oldVdom.props.content !== newVdom.props.content) {
       let currentDOM = newVdom.dom = findDOM(oldVdom) // TODO 疑惑
       currentDOM.textContent = newVdom.props.content // 更新文本节点内容位新的文本内容
@@ -207,6 +252,26 @@ function updateElement (oldVdom, newVdom) {
       updateFunctionComponent(oldVdom, newVdom)
     }
   }
+}
+const updateProvider = (oldVdom, newVdom) => {
+  const currentDOM = findDOM(oldVdom) // provider 包裹的元素的真实节点
+  const parentDOM = currentDOM.parentNode
+  const { type, props } = newVdom // 此处 type = { $$typeof: REACT_PROVIDER,  _context:context }
+  const context = type._context
+  context._currentValue = props.value // 给 context 赋上新的 _currentValue
+  const renderVdom = props.children
+  compareTowVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
+  newVdom.oldRenderVdom = renderVdom // TODO 类似语句需要弄懂
+
+}
+const updateContext = (oldVdom, newVdom) => {
+  const currentDOM = findDOM(oldVdom) // Consumer 包裹的元素的真实节点
+  const parentDOM = currentDOM.parentNode
+  const { type, props } = newVdom // 此处 type = { $$typeof: REACT_CONTEXT,  _context:context }
+  const context = type._context
+  const renderVdom = props.children(context._currentValue)
+  compareTowVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
+  newVdom.oldRenderVdom = renderVdom // TODO 类似语句需要弄懂
 }
 
 /**

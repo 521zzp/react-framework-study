@@ -7,6 +7,9 @@ export const PLACEMENT = 'PLACEMENT' // 插入原生
 export const MOVE = 'MOVE' // 位置的移动
 export const DELETION = 'DELETION' // 删除操作
 
+export const REACT_PROVIDER = Symbol('react.provider')
+export const REACT_CONTEXT = Symbol('react.context')
+
 
 // React全家桶（架构）
 // webpack全家桶（架构）

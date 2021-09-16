@@ -8,7 +8,9 @@ import { Form } from "./Refs";
 // import reportWebVitals from './reportWebVitals';
 
 import CounterDiff from './components/CounterDiff'
+import ScrollList from "./components/ScrollList"
 
+import { Page } from './components/ContextExample'
 
 /**
  * 可以通过 函数定义组件
@@ -201,9 +203,14 @@ class Calculate extends React.Component {
 const element = React.createElement(ClassComponent, { title: '哈哈哈哈' })
 
 console.log(JSON.stringify(element, null, 2))
+console.log('CounterDiff', CounterDiff)
 
 ReactDOM.render(
-  <CounterDiff title="老标题"/>,
+  <div>
+    <CounterDiff title="老标题"/>
+    <ScrollList/>
+    <Page/>
+  </div>,
   document.getElementById('root')
 );
 
