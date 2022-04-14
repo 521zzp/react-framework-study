@@ -10,6 +10,9 @@ export const DELETION = 'DELETION' // 删除操作
 export const REACT_PROVIDER = Symbol('react.provider')
 export const REACT_CONTEXT = Symbol('react.context')
 
+export const REACT_MEMO = Symbol('react.symbol')
+
+
 
 // React全家桶（架构）
 // webpack全家桶（架构）

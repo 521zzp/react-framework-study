@@ -1,6 +1,13 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
-import {REACT_CONTEXT, REACT_ELEMENT, REACT_FORWARD_REF, REACT_FRAGMENT, REACT_PROVIDER} from "./constant";
+import {
+  REACT_CONTEXT,
+  REACT_ELEMENT,
+  REACT_FORWARD_REF,
+  REACT_FRAGMENT, REACT_MEMO,
+  REACT_PROVIDER,
+} from "./constant";
+import { shallowEquals } from './utils'
 
 /**
  *
@@ -14,8 +21,8 @@ function createElement (type, config, children) {
   let ref // 通过ref引用此元素的DOM
   let key // 可以唯一标识一个子元素
   if (config) {
-    config._source && delete config._source
-    config._self && delete config._self
+    config.hasOwnProperty('__source') && delete config.__source
+    config.hasOwnProperty('__self') && delete config.__self
     ref = config.ref
     key = config.key
     delete config.ref
@@ -52,13 +59,31 @@ function createContext () {
   }
   return context
 }
+
+class PureComponent extends Component {
+  shouldComponentUpdate (nextProps, nextState) {
+    // 只要属性和状态对象，有任意一个属性变了，就会进行更新，如果全相等，才不更新
+    return !shallowEquals(this.props, nextProps) || !shallowEquals(this.state, nextState)
+  }
+}
+
+function memo (type, compare = shallowEquals) {
+  return {
+    $$typeof: REACT_MEMO,
+    type, // 函数组件
+    compare
+  }
+}
+
 const React = {
   createElement,
+  Component,
   createRef,
-  createContext,
   forwardRef,
   Fragment: REACT_FRAGMENT,
-  Component
+  createContext,
+  PureComponent,
+  memo
 }
 
 export default React

@@ -1,4 +1,4 @@
-import { compareTowVdom, findDOM } from "./react-dom";
+import { compareTwoVdom, findDOM } from "./react-dom";
 // 更新队列
 export let updateQueue = {
   isBatchingUpdate: false, // 默认值是非批量的,同步的
@@ -63,9 +63,8 @@ class Updater {
  */
 function shouldUpdate (classInstance, nextProps, nextState) {
   let willUpdate = true // 表示组件是否需要更新
-  const shouldComponentUpdate = classInstance.shouldComponentUpdate
-  // 有次方法并且返回false，组件不更新 生命周期 shouldComponentUpdate
-  if (shouldComponentUpdate && !shouldComponentUpdate(nextProps, nextState)) {
+  // 如果有shouldComponentUpdate方法并且返回false，组件不更新 生命周期 shouldComponentUpdate
+  if (classInstance.shouldComponentUpdate && !classInstance.shouldComponentUpdate(nextProps, nextState)) {
     willUpdate = false // 表示不需要更新
   }
   // 如果需要更新，并且有componentWillUpdate方法，就执行它
@@ -115,7 +114,7 @@ class Component {
     const snapshot = this.getSnapshotBeforeUpdate && this.getSnapshotBeforeUpdate()
     // 然后基于新的属性和状态，计算新的虚拟DOM
     let newRenderVdom = this.render()
-    compareTowVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom)
+    compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom)
     this.oldRenderVdom = newRenderVdom
     if (this.componentDidUpdate) {
       // 生命周期 componentDidUpdate

@@ -6,7 +6,7 @@ import {
   PLACEMENT,
   DELETION,
   REACT_PROVIDER,
-  REACT_CONTEXT
+  REACT_CONTEXT, REACT_MEMO
 } from "./constant";
 import { addEvent } from './event'
 import {forwardRef} from "react";
@@ -36,7 +36,9 @@ export const createDOM = (vdom) => {
   if (!vdom) return null
   const { type, props, ref } = vdom
   let dom // 真实DOM
-  if (type && type.$$typeof === REACT_PROVIDER) {
+  if (type && type.$$typeof === REACT_MEMO) {
+    return mountMemo(vdom)
+  } else if (type && type.$$typeof === REACT_PROVIDER) {
     return mountProvider(vdom)
   } else if (type && type.$$typeof === REACT_CONTEXT) {
     return mountContext(vdom)
@@ -73,6 +75,15 @@ export const createDOM = (vdom) => {
     ref.current = dom // 如果把虚拟DOM转成真实DOM了，就把真实DOM给 ref.current
   }
   return dom
+}
+
+function mountMemo (vdom) {
+  // type = { $$typeof: REACT.MEMO, type, compare } // 里面的type是函数组件
+  const { type, props } = vdom
+  const renderVdom = type.type(props)
+  vdom.prevProps = props // 在vdom上记录上一次的属性对象
+  vdom.oldRenderVdom = renderVdom // finDOM 的时候用的
+  return createDOM(renderVdom)
 }
 
 /**
@@ -189,7 +200,7 @@ export function findDOM (vdom) {
  * @param oldVdom
  * @param newVdom
  */
-export function compareTowVdom (parentDOM, oldVdom, newVdom, nextDOM) {
+export function compareTwoVdom (parentDOM, oldVdom, newVdom, nextDOM) {
   // 如果新的老的都是Null,什么都不用做
   if (!oldVdom && !newVdom) {
     return null
@@ -228,7 +239,10 @@ export function compareTowVdom (parentDOM, oldVdom, newVdom, nextDOM) {
  */
 function updateElement (oldVdom, newVdom) {
   // Provider 更新
-  if (oldVdom.type.$$typeof === REACT_PROVIDER) {
+
+  if (oldVdom.type.$$typeof === REACT_MEMO) {
+    updateMemo(oldVdom, newVdom)
+  } else if (oldVdom.type.$$typeof === REACT_PROVIDER) {
     updateProvider(oldVdom, newVdom)
   } else if (oldVdom.type.$$typeof === REACT_CONTEXT) { //
     updateContext(oldVdom, newVdom)
@@ -253,6 +267,24 @@ function updateElement (oldVdom, newVdom) {
     }
   }
 }
+
+function updateMemo (oldVdom, newVdom) {
+  const { type, prevProps } = oldVdom
+  // 比较结果相等，不需要重新渲染 render
+  if (type.compare(prevProps, newVdom.props)) {
+    newVdom.prevProps = newVdom.props
+    newVdom.oldRenderVdom = oldVdom.oldRenderVdom
+  } else { // 比较结果不相等
+    let currentDOM = findDOM(oldVdom)
+    let parentDom = currentDOM.parentNode
+    let { type, props } = newVdom
+    let renderVdom = type.type(props)
+    compareTwoVdom(parentDom, oldVdom.oldRenderVdom, renderVdom)
+    newVdom.prevProps = props
+    newVdom.oldRenderVdom = renderVdom
+  }
+}
+
 const updateProvider = (oldVdom, newVdom) => {
   const currentDOM = findDOM(oldVdom) // provider 包裹的元素的真实节点
   const parentDOM = currentDOM.parentNode
@@ -260,7 +292,7 @@ const updateProvider = (oldVdom, newVdom) => {
   const context = type._context
   context._currentValue = props.value // 给 context 赋上新的 _currentValue
   const renderVdom = props.children
-  compareTowVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
+  compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
   newVdom.oldRenderVdom = renderVdom // TODO 类似语句需要弄懂
 
 }
@@ -270,7 +302,7 @@ const updateContext = (oldVdom, newVdom) => {
   const { type, props } = newVdom // 此处 type = { $$typeof: REACT_CONTEXT,  _context:context }
   const context = type._context
   const renderVdom = props.children(context._currentValue)
-  compareTowVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
+  compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom)
   newVdom.oldRenderVdom = renderVdom // TODO 类似语句需要弄懂
 }
 
@@ -297,7 +329,7 @@ function updateFunctionComponent (oldVdom, newVdom) {
   let parentDOM = currentDom.parentNode
   let { type, props } = newVdom
   let newRenderVdom = type(props)
-  compareTowVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom) // TODO 疑惑 oldVdom.oldRenderVdom 哪里来的
+  compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom) // TODO 疑惑 oldVdom.oldRenderVdom 哪里来的
   newVdom.oldRenderVdom = newRenderVdom
 
 }
@@ -391,7 +423,7 @@ function updateChildren (parentDOM, oldVChildren, newVChildren) {
   for (let i = 0; i < maxChildrenLength; i++) {
     // 视图去除当前节点的下一个，最近的弟弟真实DOM节点
     let nextVdom = _oldVChildren.find((item, index) => index > i && item && findDOM(item))
-    compareTowVdom(parentDOM, _oldVChildren[i], _newVChildren[i], findDOM(nextVdom))
+    compareTwoVdom(parentDOM, _oldVChildren[i], _newVChildren[i], findDOM(nextVdom))
   }*/
 }
 
